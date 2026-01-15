@@ -11,6 +11,7 @@ import (
 
 type Signer interface {
 	Sign(message []byte, hFunc hash.Hash) ([]byte, error)
+	Sign2(message []byte) ([]byte, error)
 }
 
 type KeyManager interface {
@@ -32,6 +33,14 @@ func NewKeyManager(b []byte) (KeyManager, error) {
 }
 
 func (key *keyManager) Sign(hashedMessage []byte, hFunc hash.Hash) ([]byte, error) {
+	hashedMessageAsQuinticExtension, err := gFp5.FromCanonicalLittleEndianBytes(hashedMessage)
+	if err != nil {
+		return nil, fmt.Errorf("failed to parse message while signing. message: %v err: %w", hashedMessage, err)
+	}
+	return schnorr.SchnorrSignHashedMessage(hashedMessageAsQuinticExtension, key.key).ToBytes(), nil
+}
+
+func (key *keyManager) Sign2(hashedMessage []byte) ([]byte, error) {
 	hashedMessageAsQuinticExtension, err := gFp5.FromCanonicalLittleEndianBytes(hashedMessage)
 	if err != nil {
 		return nil, fmt.Errorf("failed to parse message while signing. message: %v err: %w", hashedMessage, err)
